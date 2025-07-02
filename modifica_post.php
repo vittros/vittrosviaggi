@@ -20,13 +20,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $contenuto = $_POST['contenuto'] ?? '';
         $cartella = $_POST['cartella_foto'] ?? '';
         $musica = trim($_POST['musica'] ?? '');
+        $sfondo = trim($_POST['sfondo'] ?? '');
 
         if ($id <= 0 || $titolo === '') {
             die("Dati non validi per il salvataggio.");
         }
 
-        $stmt = $pdo->prepare("UPDATE post SET titolo = ?, contenuto = ?, cartella = ?, musica = ? WHERE id = ?");
-        $stmt->execute([$titolo, $contenuto, $cartella, $musica, $id]);
+        $stmt = $pdo->prepare("UPDATE post SET titolo = ?, contenuto = ?, cartella = ?, musica = ?, sfondo = ? WHERE id = ?");
+        $stmt->execute([$titolo, $contenuto, $cartella, $musica, $sfondo, $id]);
 
         // Redirect con messaggio
         $msg = urlencode("Post aggiornato con successo.");

@@ -41,6 +41,7 @@ $foto = $stmt2->fetchAll();
 <meta charset="UTF-8" />
 <title><?= htmlspecialchars($post['titolo']) ?> - VittRos Viaggi</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="css/content.css">
 <style>
 .img-gallery {
     max-width: 200px;
@@ -56,9 +57,11 @@ $foto = $stmt2->fetchAll();
     <h1><?= htmlspecialchars($post['titolo']) ?></h1>
     <p class="text-muted">Creato il <?= htmlspecialchars($post['data_creazione']) ?></p>
 
-    <div class="mb-4">
-        <?= $post['contenuto'] // Contenuto con TinyMCE, quindi HTML valido ?>
+    <div class="mb-4 <?= htmlspecialchars($post['sfondo'] ?? '') ?>">
+      <?= $post['contenuto'] ?>
     </div>
+
+
 
     <?php if (count($foto) > 0): ?>
         <h4>📸 Foto collegate:</h4>
