@@ -1,0 +1,32 @@
+.bg-azzurro {
+  background-color: #d0e7ff;
+}
+
+.bg-giallo {
+  background-color: #fff9c4;
+}
+
+.bg-sfondo-parlasco {
+  background: url('/web_wallpaper/2024/0101%20Parlasco.jpg') center center/cover no-repeat;
+}
+
+/* Sfondo immagine con effetto KDE wallpaper */
+.sfondo-kde {
+  position: relative;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-image: url('/leNostre/001%20Cagnolini/Seneca/013_IMG_4111.jpg');
+}
+
+.sfondo-kde::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: inherit;
+  background-size: cover;
+  background-position: center;
+  filter: blur(20px);
+  z-index: -1;
+}
+

@@ -1,0 +1,84 @@
+<?php
+session_start();
+require_once 'lib/functions.php';
+
+if (!isset($_SESSION['loggedin'])) {
+    header('Location: login.php');
+    exit;
+}
+
+$pdo = getPDO();
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Aggiorna post
+    $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+    if ($id <= 0) {
+        die("ID post non valido.");
+    }
+
+    $titolo = $_POST['titolo'] ?? '';
+    $cartella = $_POST['cartella_foto'] ?? '';
+    $contenuto = $_POST['contenuto'] ?? '';
+    $musica = $_POST['musica'] ?? '';
+
+    $autore_id = $_SESSION['user_id'] ?? 0;
+    if ($autore_id == 0) {
+        die("Errore: utente non autenticato.");
+    }
+
+    try {
+        $stmt = $pdo->prepare("UPDATE post SET titolo = ?, cartella = ?, contenuto = ?, musica = ? WHERE id = ? AND autore_id = ?");
+        $stmt->execute([$titolo, $cartella, $contenuto, $musica, $id, $autore_id]);
+    } catch (PDOException $e) {
+        die("Errore DB: " . $e->getMessage());
+    }
+
+    header("Location: diario_lista.php");
+    exit;
+}
+
+// Metodo GET: mostra form con dati post
+
+$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+if ($id <= 0) {
+    die("ID post non valido.");
+}
+
+$stmt = $pdo->prepare("SELECT * FROM post WHERE id = ?");
+$stmt->execute([$id]);
+$post = $stmt->fetch();
+
+if (!$post) {
+    die("Post non trovato.");
+}
+
+$base_path = '/srv/http/leNostre';
+$rel_path = $post['cartella'] ?? '';
+$full_path = realpath($base_path . '/' . $rel_path);
+if (!$full_path || strpos($full_path, realpath($base_path)) !== 0) {
+    $full_path = realpath($base_path);
+    $rel_path = '';
+}
+$cartelle = suggerisci_cartelle($post['titolo'], '/srv/http/leNostre');
+
+/* $cartelle = array_filter(scandir($full_path), function ($item) use ($full_path) {
+    return $item !== '.' && $item !== '..' && is_dir($full_path . '/' . $item);
+}); */
+?>
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Modifica post</title>
+  <link rel="stylesheet" href="css/form_post.css">
+  <?php caricaTinyMCE(); ?>
+</head>
+<body>
+  <h1>Modifica post</h1>
+  <?php
+     require_once 'lib/editor.php';
+     caricaTinyMCE();
+  ?>
+  <?php require_once 'lib/footer.php'; ?>
+</body>
+</html>

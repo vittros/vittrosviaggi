@@ -1,0 +1,147 @@
+function mostra_form_post($post = null, $cartelle = [], $rel_path = '') {
+    $titolo = $post['titolo'] ?? '';
+    $contenuto = $post['contenuto'] ?? '';
+    $cartella_selezionata = $post['cartella'] ?? $rel_path;
+    $musica = $post['musica'] ?? '';
+    $id = $post['id'] ?? '';
+
+    $livello_superiore = dirname($cartella_selezionata);
+    if ($livello_superiore === '.' || $cartella_selezionata === '') {
+        $livello_superiore = '';
+    }
+    ?>
+
+    <form action="<?= $id ? 'modifica_post.php' : 'salva_post.php' ?>" method="post">
+        <?php if ($id): ?>
+            <input type="hidden" name="id" value="<?= htmlspecialchars($id) ?>">
+        <?php endif; ?>
+
+        <div class="form-group">
+          <label for="titolo">Titolo del post:</label>
+          <input type="text" name="titolo" id="titolo" required value="<?= htmlspecialchars($titolo) ?>">
+        </div>
+
+        <div class="form-group">
+          <label for="contenuto">Contenuto:</label>
+          <textarea name="contenuto" id="contenuto"><?= htmlspecialchars($contenuto) ?></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="foto">Scegli una cartella di foto da includere:</label>
+
+          <?php if ($cartella_selezionata): ?>
+            <p><a href="?id=<?= $id ?>&path=<?= urlencode($livello_superiore) ?>">🔙 Torna a: <?= htmlspecialchars($livello_superiore ?: '/') ?></a></p>
+            <p><strong>📂 Cartella attuale:</strong> <?= htmlspecialchars($cartella_selezionata) ?></p>
+          <?php endif; ?>
+
+          <div class="scroll-box">
+            <?php if (empty($cartelle)): ?>
+              <p><em>(Nessuna sottocartella)</em></p>
+            <?php else: ?>
+              <?php foreach ($cartelle as $cartella): ?>
+                <a class="cartella-link" href="?id=<?= $id ?>&path=<?= urlencode(trim(($cartella_selezionata ? $cartella_selezionata . '/' : '') . $cartella, '/')) ?>">
+                  📁 <?= htmlspecialchars($cartella) ?>
+                </a>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </div>
+
+          <?php if (!empty($cartella_selezionata)): ?>
+            <div class="azioni">
+              <input type="hidden" name="cartella_foto" id="cartella_foto" value="<?= htmlspecialchars($cartella_selezionata) ?>">
+              <button type="submit" name="usa_cartella" class="btn btn-primary">✔️ Usa questa cartella</button>
+              <a class="btn btn-secondary" target="_blank" href="galleria.php?path=<?= urlencode($cartella_selezionata) ?>">🖼 Apri galleria</a>
+            </div>
+          <?php endif; ?>
+        </div>
+
+        <div class="form-group">
+          <label for="musica">Link a file musicale (opzionale):</label>
+          <input type="text" name="musica" placeholder="URL o percorso file" value="<?= htmlspecialchars($musica) ?>">
+        </div>
+
+        <button type="button" onclick="apriGalleria()">📷 Inserisci foto dal nostro archivio</button>
+
+        <br><br>
+        <button type="submit">💾 Salva post</button>
+    </form>
+
+    <script src="/libs/tinymce/tinymce.min.js"></script>
+    <script>
+      tinymce.init({
+        selector: '#contenuto',
+        plugins: 'lists link image media code table textcolor',
+        toolbar: 'undo redo | styleselect | fontfamily fontsize | bold italic underline | forecolor backcolor | alignleft aligncenter alignright | bullist numlist | link image media | code',
+        images_upload_url: 'upload_tinymce.php',
+        automatic_uploads: true,
+        images_reuse_filename: true,
+        font_family_formats: 'Arial=arial,helvetica,sans-serif; Courier New=courier new,courier; Georgia=georgia,palatino; Tahoma=tahoma,arial,helvetica; Verdana=verdana,geneva',
+        font_size_formats: '8pt 10pt 12pt 14pt 16pt 18pt 24pt 36pt 48pt',
+        style_formats: [
+          { title: 'Sfondo azzurro', block: 'p', classes: 'bg-azzurro' },
+          { title: 'Sfondo giallo', block: 'p', classes: 'bg-giallo' },
+          { title: 'Sfondo Parlasco', block: 'div', classes: 'bg-sfondo-parlasco' },
+          { title: 'Sfondo immagine KDE', block: 'div', classes: 'sfondo-kde' }
+        ],
+        content_css: '/css/content.css',
+        height: 400,
+        language: 'it'
+      });
+
+      function apriGalleria() {
+        const cartella = document.getElementById("cartella_foto").value;
+        if (!cartella) {
+          alert("Seleziona prima una cartella!");
+          return;
+        }
+        const url = "galleria.php?cartella=" + encodeURIComponent(cartella);
+        window.open(url, 'Galleria', 'width=1000,height=700');
+      }
+      
+      function aggiornaCartelleSuggerite(id) {
+        fetch('scripts/ricarica_cartelle.php', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+          body: 'id=' + encodeURIComponent(id)
+        })
+        .then(r => r.json())
+        .then(cartelle => {
+          const box = document.querySelector('.scroll-box');
+          if (box) {
+            box.innerHTML = '';
+            if (cartelle.length === 0) {
+              box.innerHTML = '<p><em>(Nessuna cartella suggerita)</em></p>';
+            } else {
+              cartelle.forEach(c => {
+                const link = document.createElement('a');
+                link.className = 'cartella-link';
+                link.href = '?id=' + id + '&path=' + encodeURIComponent(c);
+                link.textContent = '📁 ' + c.split('/').pop();
+                box.appendChild(link);
+              });
+            }
+          }
+        });
+      }
+
+      const idField = document.querySelector('input[name="id"]');
+      if (idField) aggiornaCartelleSuggerite(idField.value);
+
+      const titoloInput = document.getElementById("titolo");
+      if (titoloInput && idField) {
+        titoloInput.addEventListener("blur", function () {
+          const titolo = this.value;
+          const id = idField.value;
+          if (!titolo || !id) return;
+          fetch('scripts/autosave_titolo.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: 'id=' + encodeURIComponent(id) + '&titolo=' + encodeURIComponent(titolo)
+          });
+        });
+      }
+    </script>
+
+<?php
+}
+

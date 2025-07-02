@@ -1,0 +1,40 @@
+<?php
+session_start();
+require_once 'lib/functions.php';
+
+if (!isset($_SESSION['loggedin'])) {
+    header('Location: login.php');
+    exit;
+}
+
+$autore_id = $_SESSION['user_id'];
+$base_path = '/srv/http/leNostre';
+
+// Recupera bozza o crea bozza finta, come hai definito
+$bozza = crea_o_recupera_bozza($autore_id);
+
+$rel_path = $_GET['path'] ?? $bozza['cartella'] ?? '';
+$full_path = realpath($base_path . '/' . $rel_path);
+
+if (!$full_path || strpos($full_path, realpath($base_path)) !== 0) {
+    $full_path = realpath($base_path);
+    $rel_path = '';
+}
+
+$cartelle = suggerisci_cartelle($bozza['titolo'], $base_path);
+?>
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <title>Nuovo post</title>
+  <link rel="stylesheet" href="css/form_post.css" />
+  <?php caricaTinyMCE(); ?>
+</head>
+<body>
+  <h1>Scrivi un nuovo post</h1>
+  <?php mostra_form_post($bozza, $cartelle, $rel_path); ?>
+  <?php require_once 'lib/footer.php'; ?>
+</body>
+</html>
+
