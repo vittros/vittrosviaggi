@@ -2,39 +2,69 @@
 session_start();
 require_once 'lib/functions.php';
 
+// ⚠️ Solo per debug!
+// ini_set('display_errors', 1);
+// ini_set('display_startup_errors', 1);
+// error_reporting(E_ALL);
+
 if (!isset($_SESSION['loggedin'])) {
     header('Location: login.php');
     exit;
 }
 
-$autore_id = $_SESSION['user_id'];
-$base_path = '/srv/http/leNostre';
+$pdo = getPDO();
 
-// Recupera bozza o crea bozza finta, come hai definito
-$bozza = crea_o_recupera_bozza($autore_id);
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $azione = $_POST['azione'] ?? '';
 
-$rel_path = $_GET['path'] ?? $bozza['cartella'] ?? '';
-$full_path = realpath($base_path . '/' . $rel_path);
+    if ($azione === 'annulla') {
+        header("Location: index.php");
+        exit;
+    }
 
-if (!$full_path || strpos($full_path, realpath($base_path)) !== 0) {
-    $full_path = realpath($base_path);
-    $rel_path = '';
+    $titolo = trim($_POST['titolo'] ?? '');
+    $commento = trim($_POST['commento'] ?? '');
+
+    if ($titolo !== '') {
+        $stmt = $pdo->prepare('INSERT INTO post (titolo, contenuto, autore_id, bozza) VALUES (?, ?, ?, 1)');
+        $stmt->execute([$titolo, $commento, $_SESSION['user_id'] ?? 1]);
+
+        $post_id = $pdo->lastInsertId();
+        header("Location: modifica_post.php?id=$post_id");
+        exit;
+    }
+
+    $errore = "Il titolo è obbligatorio.";
 }
 
-$cartelle = suggerisci_cartelle($bozza['titolo'], $base_path);
+
 ?>
+
 <!DOCTYPE html>
-<html lang="it">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Nuovo post</title>
-  <link rel="stylesheet" href="css/form_post.css" />
-  <?php caricaTinyMCE(); ?>
+    <meta charset="utf-8">
+    <title>Nuovo Post - vittrosviaggi</title>
+    <link rel="stylesheet" href="css/stile.css">
 </head>
 <body>
-  <h1>Scrivi un nuovo post</h1>
-  <?php mostra_form_post($bozza, $cartelle, $rel_path); ?>
-  <?php require_once 'lib/footer.php'; ?>
+    <h1>Nuovo Post (bozza)</h1>
+
+    <?php if (!empty($errore)): ?>
+        <p style="color:red"><?= htmlspecialchars($errore) ?></p>
+    <?php endif; ?>
+
+<form method="post">
+    <label>Titolo:</label><br>
+    <input type="text" name="titolo" size="60" required><br><br>
+
+    <label>Commento iniziale:</label><br>
+    <textarea name="commento" rows="5" cols="60"></textarea><br><br>
+
+    <button type="submit" name="azione" value="crea">Crea e modifica</button>
+    <button type="submit" name="azione" value="annulla">Annulla</button>
+</form>
+
 </body>
 </html>
 

@@ -14,33 +14,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($_POST['azione'] === 'annulla') {
         header("Location: diario_lista.php");
         exit;
-    } elseif ($_POST['azione'] === 'salva') {
-        $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
-        $titolo = trim($_POST['titolo'] ?? '');
-        $contenuto = $_POST['contenuto'] ?? '';
-        $cartella = $_POST['cartella_foto'] ?? '';
-        $musica = trim($_POST['musica'] ?? '');
-
-        if ($id <= 0 || $titolo === '') {
-            die("Dati non validi per il salvataggio.");
-        }
-
-        $stmt = $pdo->prepare("UPDATE post SET titolo = ?, contenuto = ?, cartella = ?, musica = ? WHERE id = ?");
-        $stmt->execute([$titolo, $contenuto, $cartella, $musica, $id]);
-
-        // Redirect con messaggio
-        $msg = urlencode("Post aggiornato con successo.");
-        header("Location: diario_lista.php?msg=$msg");
-        exit;
     }
 }
 
-// Carica il post da modificare, sia GET che POST id
 $id = isset($_GET['id']) ? (int)$_GET['id'] : (isset($_POST['id']) ? (int)$_POST['id'] : 0);
 
+/* $id = isset($_GET['id']) ? (int)$_GET['id'] : (isset($_POST['id']) ? (int)$_POST['id'] : 0);
 if ($id <= 0) {
     die("ID post non valido.");
-}
+} */
 
 $stmt = $pdo->prepare("SELECT * FROM post WHERE id = ?");
 $stmt->execute([$id]);
