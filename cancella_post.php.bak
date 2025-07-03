@@ -1,9 +1,7 @@
 <?php
 session_start();
-require_once 'lib/functions.php';
-$pdo = getPDO();
+require_once 'lib/config.php';  // Assumi che qui ci sia $pdo PDO
 
-// Verifica login
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit;
@@ -12,10 +10,8 @@ if (!isset($_SESSION['user_id'])) {
 $ruolo = $_SESSION['ruolo'] ?? 'ospite';
 $user_id = $_SESSION['user_id'];
 
-// Prendi l'ID del post da GET o POST e validalo
-$id = $_GET['id'] ?? $_POST['id'] ?? 0;
-$id = (int)$id;
-
+// Prendi ID post da POST e validalo
+$id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
 if ($id <= 0) {
     die("ID post non valido.");
 }

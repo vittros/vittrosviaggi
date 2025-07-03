@@ -28,7 +28,7 @@ $cartelle = suggerisci_cartelle($bozza['titolo'], $base_path);
 <head>
   <meta charset="UTF-8" />
   <title>Nuovo post</title>
-  <link rel="stylesheet" href="css/form_post.css" />
+  <link rel="stylesheet" href="css/content.css" />
   <?php caricaTinyMCE(); ?>
 </head>
 <body>

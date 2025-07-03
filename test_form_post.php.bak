@@ -21,7 +21,7 @@ $rel_path = $post_fake['cartella'];
 <head>
   <meta charset="UTF-8">
   <title>Test Form Post</title>
-  <link rel="stylesheet" href="/vittrosviaggi/css/content.css">
+  <link rel="stylesheet" href="css/content.css">
   <?php caricaTinyMCE(); ?>
 </head>
 <body>

@@ -48,7 +48,7 @@ $cartelle = suggerisci_cartelle($post['titolo'], $base_path);
 <head>
   <meta charset="UTF-8">
   <title>Modifica post</title>
-  <link rel="stylesheet" href="/vittrosviaggi/css/form_post.css">
+  <link rel="stylesheet" href="/vittrosviaggi/css/">
   <?php caricaTinyMCE(); ?>
 </head>
 <body>
