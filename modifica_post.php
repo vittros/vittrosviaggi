@@ -1,7 +1,10 @@
 <?php
-// modifica_post.php
 session_start();
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
 require_once 'lib/functions.php';
+require_once 'lib/mostra_form.php';
 
 if (!isset($_SESSION['loggedin'])) {
     header('Location: login.php');
@@ -10,59 +13,92 @@ if (!isset($_SESSION['loggedin'])) {
 
 $pdo = getPDO();
 
+// ID post
+$id = isset($_GET['id']) ? (int)$_GET['id'] : (isset($_POST['id']) ? (int)$_POST['id'] : 0);
+if ($id <= 0) die("ID post non valido.");
+
+$stmt = $pdo->prepare("SELECT * FROM post WHERE id = ?");
+$stmt->execute([$id]);
+$post = $stmt->fetch();
+if (!$post) die("Post non trovato.");
+
+// Salvataggio
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if ($_POST['azione'] === 'annulla') {
+    $azione = $_POST['azione'] ?? '';
+    if ($azione === 'annulla') {
         header("Location: diario_lista.php");
         exit;
-    } elseif ($_POST['azione'] === 'salva') {
-        $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+    } elseif ($azione === 'salva') {
         $titolo = trim($_POST['titolo'] ?? '');
         $contenuto = $_POST['contenuto'] ?? '';
         $cartella = $_POST['cartella_foto'] ?? '';
         $musica = trim($_POST['musica'] ?? '');
         $sfondo = trim($_POST['sfondo'] ?? '');
-
-        if ($id <= 0 || $titolo === '') {
-            die("Dati non validi per il salvataggio.");
-        }
+        if ($titolo === '') die("Titolo mancante.");
 
         $stmt = $pdo->prepare("UPDATE post SET titolo = ?, contenuto = ?, cartella = ?, musica = ?, sfondo = ? WHERE id = ?");
         $stmt->execute([$titolo, $contenuto, $cartella, $musica, $sfondo, $id]);
-
-        // Redirect con messaggio
-        $msg = urlencode("Post aggiornato con successo.");
-        header("Location: diario_lista.php?msg=$msg");
+        header("Location: diario_lista.php?msg=" . urlencode("Post aggiornato"));
         exit;
     }
 }
 
-// Carica il post da modificare, sia GET che POST id
-$id = isset($_GET['id']) ? (int)$_GET['id'] : (isset($_POST['id']) ? (int)$_POST['id'] : 0);
-
-if ($id <= 0) {
-    die("ID post non valido.");
-}
-
-$stmt = $pdo->prepare("SELECT * FROM post WHERE id = ?");
-$stmt->execute([$id]);
-$post = $stmt->fetch();
-
-if (!$post) {
-    die("Post non trovato.");
-}
-
+// --- CONFIG ---
 $base_path = '/srv/http/leNostre';
-$rel_path = $post['cartella'] ?? '';
+$rel_path = '';
+
+// 1. Se c'è un path nella GET, lo usiamo direttamente
+if (!empty($_GET['path'])) {
+    $rel_path = $_GET['path'];
+}
+if (empty($rel_path)) {
+    $suggerite = suggerisci_cartelle($post['titolo'], $base_path);
+    $cartelle = array_keys($suggerite);
+    $rel_path = reset($cartelle) ?? '';
+}
+
+// 3. Altrimenti usiamo quella già salvata nel post
+elseif (!empty($post['cartella'])) {
+    $rel_path = $post['cartella'];
+}
+
+// Verifica e normalizza il path
 $full_path = realpath($base_path . '/' . $rel_path);
 if (!$full_path || strpos($full_path, realpath($base_path)) !== 0) {
-    $full_path = realpath($base_path);
     $rel_path = '';
+    $full_path = realpath($base_path);
 }
 
-$cartelle = suggerisci_cartelle($post['titolo'], $base_path);
-?>
 
-<!DOCTYPE html>
+// --- NORMALIZZA E VERIFICA ---
+$full_path = realpath($base_path . '/' . $rel_path);
+if (!$full_path || strpos($full_path, realpath($base_path)) !== 0) {
+    $rel_path = '';
+    $full_path = realpath($base_path);
+}
+
+
+
+// Protezione
+if (!$full_path || strpos($full_path, realpath($base_path)) !== 0) {
+    $rel_path = '';
+    $full_path = realpath($base_path);
+}
+
+// Trova sottocartelle
+$cartelle = [];
+if (is_dir($full_path)) {
+    foreach (scandir($full_path) as $entry) {
+        if ($entry === '.' || $entry === '..') continue;
+        if (is_dir("$full_path/$entry")) {
+            $cartelle[] = $entry;
+        }
+    }
+}
+
+$post['cartella'] = $rel_path;
+
+?><!DOCTYPE html>
 <html lang="it">
 <head>
   <meta charset="UTF-8">
@@ -71,12 +107,11 @@ $cartelle = suggerisci_cartelle($post['titolo'], $base_path);
   <?php caricaTinyMCE(); ?>
 </head>
 <body>
-
-  <p style="font-size:0.9em; color:gray;">File: <code>modifica_post.php</code></p>
-
   <h1>Modifica post</h1>
-
-  <?php mostra_form_post($post, $cartelle, $rel_path); ?>
-
+  
+  <?php 
+   $suggerite = suggerisci_cartelle($post['titolo'], $base_path);
+   mostra_form_post($post, $cartelle, $rel_path, $suggerite);
+  ?>
 </body>
 </html>
