@@ -32,45 +32,50 @@ function caricaTinyMCE() {
 tinymce.init({
     selector: '#contenuto',
     plugins: 'lists link image media code table',
-    toolbar: 'undo redo | styleselect | fontfamily fontsize | bold italic underline | forecolor backcolor | bg_azzurro bg_giallo | alignleft aligncenter alignright | bullist numlist | link image media | code',
+    toolbar: 'undo redo | styleselect | fontfamily fontsize | bold italic underline | forecolor backcolor | sfondoSelect | alignleft aligncenter alignright | bullist numlist | link image media | code',
     content_css: '/css/content.css',
     height: 400,
     font_family_formats: 'Arial=arial,helvetica,sans-serif; Courier New=courier new,courier; Georgia=georgia,palatino; Tahoma=tahoma,arial,helvetica; Verdana=verdana,geneva',
     font_size_formats: '8pt 10pt 12pt 14pt 16pt 18pt 24pt 36pt 48pt',
     setup: function(editor) {
-        function aggiornaSfondo(classe) {
-            editor.dom.setAttrib(editor.getBody(), 'class', classe || '');
-            const hidden = document.getElementById('sfondo');
-            if (hidden) hidden.value = classe || '';
-        }
+        const CLASSI_SFONDO = {
+            '': 'Default (nessuno)',
+            'bg-azzurro': 'Sfondo azzurro',
+            'bg-giallo': 'Sfondo giallo'
+        };
 
-        function impostaToggle(classe, nome, etichetta) {
-            editor.ui.registry.addToggleButton(nome, {
-                text: etichetta,
-                onAction: () => {
-                    const curr = editor.getBody().className;
-                    aggiornaSfondo(curr === classe ? '' : classe);
-                },
-                onSetup: (api) => {
-                    const toggle = () => api.setActive(editor.getBody().classList.contains(classe));
-                    editor.on('NodeChange', toggle);
-                    return () => editor.off('NodeChange', toggle);
-                }
-            });
-        }
-
-        impostaToggle('bg-azzurro', 'bg_azzurro', 'Sfondo azzurro');
-        impostaToggle('bg-giallo', 'bg_giallo', 'Sfondo giallo');
+        editor.ui.registry.addMenuButton('sfondoSelect', {
+            text: 'Sfondo',
+            fetch: function(callback) {
+                const items = Object.entries(CLASSI_SFONDO).map(([classe, label]) => {
+                    return {
+                        type: 'menuitem',
+                        text: label,
+                        onAction: function() {
+                            // Imposta la classe sul body dell'editor
+                            editor.getBody().className = classe;
+                            // Aggiorna il campo hidden
+                            const inputSfondo = document.getElementById('sfondo');
+                            if (inputSfondo) inputSfondo.value = classe;
+                        }
+                    };
+                });
+                callback(items);
+            }
+        });
 
         editor.on('init', () => {
-            const val = document.getElementById('sfondo')?.value;
-            if (val) editor.dom.setAttrib(editor.getBody(), 'class', val);
+            const sfondoSalvato = document.getElementById('sfondo')?.value;
+            if (sfondoSalvato) {
+                editor.getBody().className = sfondoSalvato;
+            }
         });
     }
 });
 </script>
 EOT;
 }
+
 
 // Recupera o crea una bozza di post
 function crea_o_recupera_bozza($autore_id) {
@@ -118,126 +123,4 @@ function suggerisci_cartelle($titolo, $base_path) {
         }
     }
     return $cartelle;
-}
-
-// Form post (creazione o modifica)
-function mostra_form_post($post = null, $cartelle = [], $rel_path = '') {
-    $titolo = $post['titolo'] ?? '';
-    $contenuto = $post['contenuto'] ?? '';
-    $cartella_selezionata = $post['cartella'] ?? $rel_path;
-    $musica = $post['musica'] ?? '';
-    $id = $post['id'] ?? '';
-    $sfondo = $post['sfondo'] ?? '';
-
-    $livello_superiore = dirname($cartella_selezionata);
-    if ($livello_superiore === '.' || $cartella_selezionata === '') {
-        $livello_superiore = '';
-    }
-    ?>
-
-    <form action="<?= $id ? 'modifica_post.php' : 'salva_post.php' ?>" method="post">
-        <?php if ($id): ?>
-            <input type="hidden" name="id" value="<?= htmlspecialchars($id) ?>">
-        <?php endif; ?>
-        <input type="hidden" name="sfondo" id="sfondo" value="<?= htmlspecialchars($sfondo) ?>">
-
-        <div class="form-group">
-            <label for="titolo">Titolo del post:</label>
-            <input type="text" name="titolo" id="titolo" required value="<?= htmlspecialchars($titolo) ?>">
-        </div>
-
-        <div class="form-group">
-            <label for="contenuto">Contenuto:</label>
-            <textarea name="contenuto" id="contenuto"><?= htmlspecialchars($contenuto) ?></textarea>
-        </div>
-
-        <div class="form-group">
-            <label for="foto">Scegli una cartella di foto da includere:</label>
-
-            <?php if ($cartella_selezionata): ?>
-                <p><a href="?id=<?= $id ?>&path=<?= urlencode($livello_superiore) ?>">🔙 Torna a: <?= htmlspecialchars($livello_superiore ?: '/') ?></a></p>
-                <p><strong>📂 Cartella attuale:</strong> <?= htmlspecialchars($cartella_selezionata) ?></p>
-            <?php endif; ?>
-
-            <div class="scroll-box">
-                <?php if (empty($cartelle)): ?>
-                    <p><em>(Nessuna sottocartella)</em></p>
-                <?php else: ?>
-                    <?php foreach ($cartelle as $cartella): ?>
-                        <a class="cartella-link" href="?id=<?= $id ?>&path=<?= urlencode(trim(($cartella_selezionata ? $cartella_selezionata . '/' : '') . $cartella, '/')) ?>">
-                            📁 <?= htmlspecialchars($cartella) ?>
-                        </a>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </div>
-
-            <?php if (!empty($cartella_selezionata)): ?>
-                <div class="azioni">
-                    <input type="hidden" name="cartella_foto" id="cartella_foto" value="<?= htmlspecialchars($cartella_selezionata) ?>">
-                    <button type="submit" name="usa_cartella" class="btn btn-primary">✔ Usa questa cartella</button>
-                    <a class="btn btn-secondary" target="_blank" href="galleria.php?path=<?= urlencode($cartella_selezionata) ?>">🖼 Apri galleria</a>
-                </div>
-            <?php endif; ?>
-        </div>
-
-        <div class="form-group">
-            <label for="musica">Link a file musicale (opzionale):</label>
-            <input type="text" name="musica" placeholder="URL o percorso file" value="<?= htmlspecialchars($musica) ?>">
-        </div>
-
-        <button type="button" onclick="apriGalleria()">📷 Inserisci foto dal nostro archivio</button>
-
-        <br><br>
-        <button type="submit" name="azione" value="salva">💾 Salva post</button>
-        <button type="submit" name="azione" value="annulla" class="btn btn-secondary">↩️ Esci senza modificare</button>
-    </form>
-
-    <script>
-    function apriGalleria() {
-        alert('Qui apri la finestra per selezionare foto dall\'archivio');
-    }
-    </script>
-
-    <style>
-    .scroll-box {
-        max-height: 150px;
-        overflow-y: auto;
-        border: 1px solid #ccc;
-        padding: 5px;
-        margin-bottom: 10px;
-    }
-    .cartella-link {
-        display: block;
-        margin: 3px 0;
-        text-decoration: none;
-        color: #0066cc;
-    }
-    .cartella-link:hover {
-        text-decoration: underline;
-    }
-    .azioni {
-        margin-top: 10px;
-    }
-    .btn {
-        margin-right: 5px;
-        padding: 5px 10px;
-        font-size: 14px;
-        cursor: pointer;
-    }
-    .btn-primary {
-        background-color: #007bff;
-        color: white;
-        border: none;
-    }
-    .btn-secondary {
-        background-color: #6c757d;
-        color: white;
-        border: none;
-    }
-    .btn-primary:hover, .btn-secondary:hover {
-        opacity: 0.8;
-    }
-    </style>
-
-<?php
 }
