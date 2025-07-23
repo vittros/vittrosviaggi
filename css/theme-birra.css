@@ -1,0 +1,33 @@
+/* Sfondo generale */
+body.theme-birra {
+    background: url('../sfondi/birra.jpg') no-repeat center center fixed;
+    background-size: cover;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Contenitore login */
+.login-box {
+    background-color: rgba(245, 222, 179, 0.9); /* tipo "birra chiara" */
+    border: 2px solid #8B4513; /* brown scuro, effetto legno */
+    max-width: 420px;
+    margin-top: 80px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 2em;
+    border-radius: 20px;
+    box-shadow: 0 0 10px rgba(139, 69, 19, 0.6);
+}
+
+/* Pulsanti */
+button, .btn {
+    background-color: #a0522d;
+    color: white;
+    border: none;
+    padding: 0.6em 1.2em;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+button:hover, .btn:hover {
+    background-color: #8b4513;
+}

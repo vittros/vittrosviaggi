@@ -1,117 +1,88 @@
 <?php
-session_start();
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
+$pagina_corrente = 'modifica';
+require_once 'lib/bootstrap.php';
+require_once 'lib/caricaTinyMCE.php';
 
-require_once 'lib/functions.php';
-require_once 'lib/mostra_form.php';
+$id_post = $_GET['id'] ?? null;
+// ⚠️ In un progetto reale bisognerebbe validare l'ID
 
-if (!isset($_SESSION['loggedin'])) {
-    header('Location: login.php');
+$pdo = getPDO();
+$stmt = $pdo->prepare("SELECT * FROM post WHERE id = ?");
+$stmt->execute([$id_post]);
+$post = $stmt->fetch();
+$autore = $post['autore_id'] ?? '';
+$titolo = $post['titolo'] ?? '';
+$msg = "✅ L'utente: $autore sta modificando il POST: id=$id_post titolo=$titolo";
+debug_log($msg, "info");
+
+
+if (!$post) {
+    echo "❌ Post non trovato.";
     exit;
 }
 
-$pdo = getPDO();
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $titolo = $_POST['titolo'] ?? '';
+    $contenuto = $_POST['contenuto'] ?? '';
 
-// ID post
-$id = isset($_GET['id']) ? (int)$_GET['id'] : (isset($_POST['id']) ? (int)$_POST['id'] : 0);
-if ($id <= 0) die("ID post non valido.");
+    $stmt = $pdo->prepare("UPDATE post SET titolo = ?, contenuto = ?, data_modifica = NOW() WHERE id = ?");
+    $stmt->execute([$titolo, $contenuto, $id_post]);
 
-$stmt = $pdo->prepare("SELECT * FROM post WHERE id = ?");
-$stmt->execute([$id]);
-$post = $stmt->fetch();
-if (!$post) die("Post non trovato.");
+    // ✅ Logging salvataggio
+    $stmt = $pdo->prepare("INSERT INTO user_history (session_id, version, user_id, ip_add, action) VALUES (?, ?, ?, ?, ?)");
+    $stmt->execute([
+        session_id(),
+        $app_version ?? '1.0.0',
+        $_SESSION['user_id'] ?? 0,
+        $_SERVER['REMOTE_ADDR'] ?? 'IP?',
+        'salva_post'
+    ]);
 
-// Salvataggio
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $azione = $_POST['azione'] ?? '';
-    if ($azione === 'annulla') {
-        header("Location: diario_lista.php");
-        exit;
-    } elseif ($azione === 'salva') {
-        $titolo = trim($_POST['titolo'] ?? '');
-        $contenuto = $_POST['contenuto'] ?? '';
-        $cartella = $_POST['cartella_foto'] ?? '';
-        $musica = trim($_POST['musica'] ?? '');
-        $sfondo = trim($_POST['sfondo'] ?? '');
-        if ($titolo === '') die("Titolo mancante.");
-
-        $stmt = $pdo->prepare("UPDATE post SET titolo = ?, contenuto = ?, cartella = ?, musica = ?, sfondo = ? WHERE id = ?");
-        $stmt->execute([$titolo, $contenuto, $cartella, $musica, $sfondo, $id]);
-        header("Location: diario_lista.php?msg=" . urlencode("Post aggiornato"));
-        exit;
-    }
+    header("Location: index.php?saved=1");
+    exit;
 }
+?>
 
-// --- CONFIG ---
-$base_path = '/srv/http/leNostre';
-$rel_path = '';
+<?php include 'lib/header.php'; ?>
 
-// 1. Se c'è un path nella GET, lo usiamo direttamente
-if (!empty($_GET['path'])) {
-    $rel_path = $_GET['path'];
-}
-if (empty($rel_path)) {
-    $suggerite = suggerisci_cartelle($post['titolo'], $base_path);
-    $cartelle = array_keys($suggerite);
-    $rel_path = reset($cartelle) ?? '';
-}
+<div class="editor-box">
+  <form method="post" action="modifica_post.php?id=<?= htmlspecialchars($id_post) ?>">
 
-// 3. Altrimenti usiamo quella già salvata nel post
-elseif (!empty($post['cartella'])) {
-    $rel_path = $post['cartella'];
-}
+    <h2 class="mb-3">Modifica post:</h2>
+    <input type="text" name="titolo" class="form-control mb-2" value="<?= htmlspecialchars($post['titolo']) ?>" required>
 
-// Verifica e normalizza il path
-$full_path = realpath($base_path . '/' . $rel_path);
-if (!$full_path || strpos($full_path, realpath($base_path)) !== 0) {
-    $rel_path = '';
-    $full_path = realpath($base_path);
-}
+    <p class="text-muted small">
+      Creato il: <?= htmlspecialchars($post['data_creazione']) ?>
+    </p>
+
+    <textarea id="contenuto" name="contenuto"><?= htmlspecialchars($post['contenuto']) ?></textarea>
+
+    <div class="btn-toolbar mt-4">
+      <button type="submit" class="btn btn-success">💾 Salva</button>
+      <a href="index.php" class="btn btn-secondary">❌ Annulla</a>
+      <button type="button" class="btn btn-info" onclick="apriPopup(<?= $id_post ?>)">📷🎵 Multimedia</button>
+      <a href="logout.php" class="btn btn-danger">🚪 Logout</a>
+    </div>
+  </form>
+</div>
+
+<?php 
+$usa_editor = true;
+include 'lib/footer.php';
+?>
+<script>
+  const titoloPost = <?= json_encode($titolo) ?>;
+
+  function apriPopup(postId) {
+    const url = `media_popup.php?post_id=${postId}&titolo=${encodeURIComponent(titoloPost)}`;
+    window.open(
+      url,
+      'popupMultimedia',
+      'width=850,height=600,resizable=yes,scrollbars=yes,toolbar=no,menubar=no,status=no'
+    );
+  }
+</script>
 
 
-// --- NORMALIZZA E VERIFICA ---
-$full_path = realpath($base_path . '/' . $rel_path);
-if (!$full_path || strpos($full_path, realpath($base_path)) !== 0) {
-    $rel_path = '';
-    $full_path = realpath($base_path);
-}
 
 
-
-// Protezione
-if (!$full_path || strpos($full_path, realpath($base_path)) !== 0) {
-    $rel_path = '';
-    $full_path = realpath($base_path);
-}
-
-// Trova sottocartelle
-$cartelle = [];
-if (is_dir($full_path)) {
-    foreach (scandir($full_path) as $entry) {
-        if ($entry === '.' || $entry === '..') continue;
-        if (is_dir("$full_path/$entry")) {
-            $cartelle[] = $entry;
-        }
-    }
-}
-
-$post['cartella'] = $rel_path;
-
-?><!DOCTYPE html>
-<html lang="it">
-<head>
-  <meta charset="UTF-8">
-  <title>Modifica post</title>
-  <link rel="stylesheet" href="/vittrosviaggi/css/content.css">
-  <?php caricaTinyMCE(); ?>
-</head>
-<body>
-  <h1>Modifica post</h1>
-  
-  <?php 
-   $suggerite = suggerisci_cartelle($post['titolo'], $base_path);
-   mostra_form_post($post, $cartelle, $rel_path, $suggerite);
-  ?>
-</body>
-</html>

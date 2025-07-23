@@ -1,0 +1,67 @@
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+
+body.theme-estate {
+  --bg-color: #fefbd8;
+  --text-color: #333;
+  --accent-color: #e67e22;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: sans-serif;
+}
+
+body.theme-estate::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: url('../sfondi/estate.jpg');
+  background-size: cover;
+  background-position: center;
+  filter: blur(0px);
+  opacity: 0.3;
+  z-index: -1;
+}
+
+button, input[type="submit"], select {
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+  padding: 0.5em 1em;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+body.page-login.theme-estate {
+    background-image: url('../sfondi/estate.jpg');
+    background-size: cover;
+    background-position: center;
+}
+
+/* Esempio dentro theme-estate.css */
+.admin-box,
+.content-box {
+    background-color: rgba(255, 255, 255, 0.85);
+    border-radius: 10px;
+    padding: 2em;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.2);
+}
+
+.login-box {
+    background-color: rgba(255, 250, 240, 0.9); /* sabbia */
+    margin-top: 100px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 2em;
+    border-radius: 25px;
+    max-width: 420px;
+    box-shadow: 0 0 15px rgba(255, 200, 100, 0.5);
+    position: relative;
+}
+
+a {
+  color: var(--accent-color);
+}

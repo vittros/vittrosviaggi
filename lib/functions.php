@@ -1,16 +1,16 @@
 <?php
 // lib/functions.php
-
-define('BASE_URL', '/vittrosviaggi/');
+require_once __DIR__ . '/config.php';
 
 // Connessione PDO
-function getPDO() {
+function getPDO()
+{
     static $pdo = null;
     if ($pdo === null) {
-        $host = 'localhost';
-        $db = 'vittrosviaggi';
-        $user = 'xxxx';
-        $pass = 'xxxx';
+        $host = DB_HOST;
+        $db = DB_NAME;
+        $user = DB_USER;
+        $pass = DB_PASS;
         $dsn = "mysql:host=$host;dbname=$db;charset=utf8mb4";
         try {
             $pdo = new PDO($dsn, $user, $pass, [
@@ -24,61 +24,9 @@ function getPDO() {
     return $pdo;
 }
 
-// TinyMCE: script e inizializzazione
-function caricaTinyMCE() {
-    echo <<<EOT
-<script src="/libs/tinymce/tinymce.min.js"></script>
-<script>
-tinymce.init({
-    selector: '#contenuto',
-    plugins: 'lists link image media code table',
-    toolbar: 'undo redo | styleselect | fontfamily fontsize | bold italic underline | forecolor backcolor | sfondoSelect | alignleft aligncenter alignright | bullist numlist | link image media | code',
-    content_css: '/css/content.css',
-    height: 400,
-    font_family_formats: 'Arial=arial,helvetica,sans-serif; Courier New=courier new,courier; Georgia=georgia,palatino; Tahoma=tahoma,arial,helvetica; Verdana=verdana,geneva',
-    font_size_formats: '8pt 10pt 12pt 14pt 16pt 18pt 24pt 36pt 48pt',
-    setup: function(editor) {
-        const CLASSI_SFONDO = {
-            '': 'Default (nessuno)',
-            'bg-azzurro': 'Sfondo azzurro',
-            'bg-giallo': 'Sfondo giallo'
-        };
-
-        editor.ui.registry.addMenuButton('sfondoSelect', {
-            text: 'Sfondo',
-            fetch: function(callback) {
-                const items = Object.entries(CLASSI_SFONDO).map(([classe, label]) => {
-                    return {
-                        type: 'menuitem',
-                        text: label,
-                        onAction: function() {
-                            // Imposta la classe sul body dell'editor
-                            editor.getBody().className = classe;
-                            // Aggiorna il campo hidden
-                            const inputSfondo = document.getElementById('sfondo');
-                            if (inputSfondo) inputSfondo.value = classe;
-                        }
-                    };
-                });
-                callback(items);
-            }
-        });
-
-        editor.on('init', () => {
-            const sfondoSalvato = document.getElementById('sfondo')?.value;
-            if (sfondoSalvato) {
-                editor.getBody().className = sfondoSalvato;
-            }
-        });
-    }
-});
-</script>
-EOT;
-}
-
-
 // Recupera o crea una bozza di post
-function crea_o_recupera_bozza($autore_id) {
+function crea_o_recupera_bozza($autore_id)
+{
     $pdo = getPDO();
     $stmt = $pdo->prepare("SELECT * FROM post WHERE autore_id = ? AND bozza = 1 ORDER BY data_creazione DESC LIMIT 1");
     $stmt->execute([$autore_id]);
@@ -99,28 +47,85 @@ function crea_o_recupera_bozza($autore_id) {
     ];
 }
 
-// Suggerisce cartelle in base al titolo
-function suggerisci_cartelle($titolo, $base_path) {
+function suggerisci_cartelle($titolo, $base_path)
+{
     preg_match_all('/\b\w+\b/u', strtolower($titolo), $matches);
     $parole = array_filter($matches[0], fn($w) => strlen($w) > 3);
 
     $cartelle = [];
-    $anni = scandir($base_path);
-    foreach ($anni as $anno) {
-        if (!is_dir("$base_path/$anno") || !preg_match('/^\d{4}$/', $anno)) continue;
 
-        $subdirs = scandir("$base_path/$anno");
-        foreach ($subdirs as $sub) {
-            $full = "$base_path/$anno/$sub";
-            if (!is_dir($full)) continue;
-            $nome = strtolower($sub);
-            foreach ($parole as $p) {
-                if (strpos($nome, $p) !== false) {
-                    $cartelle["$anno/$sub"] = $sub;
-                    break;
-                }
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($base_path, FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::SELF_FIRST
+    );
+
+    foreach ($iterator as $path) {
+        $relPath = str_replace($base_path . '/', '', $path);
+
+        // ESCLUDE thumbs e web_wallpaper
+        if (str_starts_with($relPath, 'thumbs') || str_starts_with($relPath, 'web_wallpaper')) continue;
+
+        if (!$path->isDir()) continue;
+
+        $dirname = $path->getPathname();
+        $relPath = str_replace($base_path . '/', '', $dirname);
+        $basename = strtolower(basename($dirname));
+
+        // Esclude le cartelle che NON contengono immagini
+        $immagini = glob("$dirname/*.{jpg,jpeg,png,JPG,JPEG,PNG}", GLOB_BRACE);
+        if (empty($immagini)) continue;
+
+        // Controlla se il nome cartella contiene parole chiave
+        foreach ($parole as $p) {
+            if (strpos($basename, $p) !== false) {
+                debug_log("✅ Suggerita: $relPath — contiene immagini e matcha '$p'", 'debug');
+                $cartelle[$relPath] = $relPath;  // invece di solo basename()
+                break;
             }
         }
     }
+
     return $cartelle;
+}
+
+function getValoreConfigurazione($campo)
+{
+    // Prepara la query per recuperare il valore del campo dalla vista 'last_conf'
+    $sql = "SELECT $campo FROM last_conf LIMIT 1";
+
+    // Ottieni la connessione PDO
+    $pdo = getPDO();
+
+    // Esegui la query
+    $stmt = $pdo->query($sql);
+
+    // Verifica se la query ha restituito risultati
+    if ($stmt) {
+        $row = $stmt->fetch();
+        return $row ? $row[$campo] : null;
+    }
+
+    return null;  // Se non c'è risultato, restituisci null
+}
+function aggiornaConfigurazione($campo, $valore)
+{
+    // Assicurati che il codice per aggiornare la configurazione sia corretto
+    $pdo = getPDO();  // La funzione di connessione PDO
+    $sql = "UPDATE configurazione SET $campo = :valore WHERE id = (SELECT MAX(id) FROM configurazione)";
+    $stmt = $pdo->prepare($sql);
+    $stmt->bindParam(':valore', $valore, PDO::PARAM_STR);
+    $stmt->execute();
+}
+
+function debug_log($msg, $level = 'info', $file = DEBUG_LOGFILE)
+{
+    if (!defined('DEBUG_VITTROS') || !DEBUG_VITTROS) return;
+
+    $livelli = ['none' => 0, 'error' => 1, 'warn' => 2, 'info' => 3, 'debug' => 4];
+
+    if (!isset($livelli[DEBUG_LEVEL]) || $livelli[$level] > $livelli[DEBUG_LEVEL]) return;
+
+    // Scrive nel log con data, livello e messaggio
+    $riga = sprintf("[%s] [%s] %s\n", date("Y-m-d H:i:s"), strtoupper($level), $msg);
+    file_put_contents($file, $riga, FILE_APPEND);
 }

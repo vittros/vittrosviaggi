@@ -1,17 +1,8 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+require_once 'lib/bootstrap.php'; // include già session_start, $tema_attivo, header.php, functions.php
 
-$host = "localhost";
-$dbname = "vittrosviaggi";
-$user = "xxxx";
-$pass = "xxxx"; // metti qui la password se serve
 
-$conn = new mysqli($host, $user, $pass, $dbname);
-if ($conn->connect_error) {
-    die("❌ Connessione fallita: " . $conn->connect_error);
-}
+$pdo = getPDO();
 
 if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
     $file_tmp = $_FILES['foto']['tmp_name'];
@@ -29,7 +20,7 @@ if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
         die("❌ Impossibile spostare il file nella cartella.");
     }
 
-    $stmt = $conn->prepare("INSERT INTO foto (nome_file, percorso) VALUES (?, ?)");
+    $stmt = $pdo->prepare("INSERT INTO foto (nome_file, percorso) VALUES (?, ?)");
     $stmt->bind_param("ss", $nome_file, $percorso_relativo);
 
     if ($stmt->execute()) {
@@ -45,5 +36,3 @@ if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
 }
 
 $conn->close();
-?>
-

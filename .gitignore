@@ -1,0 +1,24 @@
+# File temporanei / di backup
+*.sav
+*.old
+*.tmp
+*~
+Untitled-1.ini
+css/theme-default.css.*
+lib/ridimensiona_lib.php.sav
+login.php.sav
+media_popup.php.sav
+modifica_post.php.old
+
+# Cartelle generate
+foto/post_*/
+lib/media/
+img/
+sfondi/
+
+# Log
+*.log
+
+# Configurazione sensibile
+lib/config.php
+

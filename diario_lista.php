@@ -1,12 +1,7 @@
 <?php
-session_start();
-require_once 'lib/functions.php';
+require_once 'lib/bootstrap.php';
 $pdo = getPDO();
 
-if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
-    exit;
-}
 if (isset($_GET['msg'])) {
     echo '<div class="alert alert-success">' . htmlspecialchars($_GET['msg']) . '</div>';
 }
@@ -67,4 +62,5 @@ $posts = $stmt->fetchAll();
     <a href="index.php" class="btn btn-secondary mt-4">← Torna alla Home</a>
 </div>
 </body>
+<?php include 'lib/footer.php'; ?>
 </html>
