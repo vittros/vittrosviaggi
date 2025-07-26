@@ -11,20 +11,18 @@ $titolo = $_POST['titolo'] ?? '';
 $cartella = $_POST['cartella_foto'] ?? '';
 $contenuto = $_POST['contenuto'] ?? '';
 $musica = $_POST['musica'] ?? '';
+$visibilita = $_POST['visibilita'] ?? 'pubblico';
+
 
 $autore_id = $_SESSION['user_id'] ?? 0;
 if ($autore_id == 0) {
     die("Errore: utente non autenticato.");
 }
 
-$pdo = getPDO();
+$sql = "UPDATE post SET titolo = ?, contenuto = ?, sfondo = ?, visibilita = ?, data_modifica = NOW() WHERE id = ?";
+$res = db_update($sql, [$titolo, $contenuto, $sfondo, $visibilita, $id]);
 
-try {
-    $stmt = $pdo->prepare("INSERT INTO post (titolo, cartella, contenuto, musica, autore_id, data_creazione) VALUES (?, ?, ?, ?, ?, NOW())");
-    $stmt->execute([$titolo, $cartella, $contenuto, $musica, $autore_id]);
-} catch (PDOException $e) {
-    die("Errore DB: " . $e->getMessage());
-}
+$pdo = getPDO();
 
 header("Location: diario_lista.php");
 exit;

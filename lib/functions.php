@@ -117,15 +117,62 @@ function aggiornaConfigurazione($campo, $valore)
     $stmt->execute();
 }
 
-function debug_log($msg, $level = 'info', $file = DEBUG_LOGFILE)
-{
-    if (!defined('DEBUG_VITTROS') || !DEBUG_VITTROS) return;
-
+function debug_log($msg, $livello = 'debug') {
+    // Configurazione
     $livelli = ['none' => 0, 'error' => 1, 'warn' => 2, 'info' => 3, 'debug' => 4];
 
-    if (!isset($livelli[DEBUG_LEVEL]) || $livelli[$level] > $livelli[DEBUG_LEVEL]) return;
+    $livello_attivo = defined('DEBUG_LEVEL') ? DEBUG_LEVEL : 'debug';
+    $debug_attivo = defined('DEBUG_VITTROS') ? DEBUG_VITTROS : false;
 
-    // Scrive nel log con data, livello e messaggio
-    $riga = sprintf("[%s] [%s] %s\n", date("Y-m-d H:i:s"), strtoupper($level), $msg);
-    file_put_contents($file, $riga, FILE_APPEND);
+    // Se disattivato, non fare nulla
+    if (!$debug_attivo || $livelli[$livello] > $livelli[$livello_attivo]) {
+        return;
+    }
+
+    $logfile = defined('DEBUG_LOGFILE') ? DEBUG_LOGFILE : '/tmp/debug.log';
+
+    $bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1);
+    $file = isset($bt[0]['file']) ? basename($bt[0]['file']) : '??';
+    $line = $bt[0]['line'] ?? '??';
+    $pid = $_POST['post_id'] ?? ($_GET['post_id'] ?? 'n/d');
+    $timestamp = date('[Y-m-d H:i:s]');
+
+    $entry = "$timestamp [$livello] ($file:$line) [post_id=$pid] $msg\n";
+    @file_put_contents($logfile, $entry, FILE_APPEND);
+}
+
+
+function contiene_immagini($dir, $profondita = 3) {
+  if ($profondita <= 0) return false;
+  foreach (scandir($dir) as $entry) {
+    if ($entry === '.' || $entry === '..') continue;
+    $full = "$dir/$entry";
+    if (is_file($full) && preg_match('/\.(jpe?g|png)$/i', $entry)) {
+      return true;
+    } elseif (is_dir($full)) {
+      if (contiene_immagini($full, $profondita - 1)) return true;
+    }
+  }
+  return false;
+}
+function può_visualizzare_post($utente, $post) {
+    $ruolo = $utente['ruolo'];
+    $vis = $post['visibilita'];
+
+    if ($ruolo === 'admin') return true;
+    if ($ruolo === 'editor') return true;
+    if ($ruolo === 'ospite') return $post['autore_id'] == $utente['id'];
+    if ($ruolo === 'amik_nat') return in_array($vis, ['pubblico', 'nat']);
+    if ($ruolo === 'amico') return $vis === 'pubblico';
+
+    return false;
+}
+function emoji_ruolo($ruolo) {
+    return [
+        'admin'    => '👑',
+        'editor'   => '✏️',
+        'amico'    => '👥',
+        'amik_nat' => '🌿',
+        'ospite'   => '🙋'
+    ][$ruolo] ?? '❓';
 }

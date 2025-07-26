@@ -37,7 +37,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       'login'
     ]);
 
-    debug_log("✅ Login riuscito per utente: {$user['username']} (ID {$user['id']}) da IP $ip", "info");
+    debug_log("✅ log - Login riuscito per utente: {$user['username']} (ID {$user['id']}) da IP $ip", "info");
     header("Location: index.php");
     exit;
   }

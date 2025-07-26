@@ -6,6 +6,30 @@ if (!isset($pagina_corrente)) {
 
 require_once __DIR__ . '/functions.php';
 
+$info_utente = '';
+if (isset($_SESSION['username'], $_SESSION['ruolo'])) {
+    $emoji = emoji_ruolo($_SESSION['ruolo']);
+    $username = htmlspecialchars($_SESSION['username']);
+    $ruolo = $_SESSION['ruolo'];
+    $info_utente = <<<HTML
+    <div style="
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: rgba(255,255,255,0.50);
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        padding: 0.3em 0.7em;
+        font-size: 0.8em;
+        color: #444;
+        box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        z-index: 999;
+    ">
+        $emoji <strong>$username</strong> <small>($ruolo)</small>
+    </div>
+    HTML;
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="it">
@@ -17,3 +41,4 @@ require_once __DIR__ . '/functions.php';
     <link rel="stylesheet" href="css/theme-<?= htmlspecialchars($tema_attivo) ?>.css?v=1">
 </head>
 <body class="page-<?= $pagina_corrente ?> theme-<?= htmlspecialchars($tema_attivo) ?>">
+    <?= $info_utente ?>

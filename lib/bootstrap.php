@@ -3,7 +3,7 @@
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 define('DEBUG_VITTROS', true);  // ← metti a false per spegnere tutto
-define('DEBUG_LEVEL', 'debug');  // 'none' => 0, 'error' => 1, 'warn' => 2, 'info' => 3, 'debug' => 4
+define('DEBUG_LEVEL', 'info');  // 'none' => 0, 'error' => 1, 'warn' => 2, 'info' => 3, 'debug' => 4
 define('DEBUG_LOGFILE', '/var/log/vittrosviaggi/sessione.log');
 error_reporting(E_ALL);
 session_start();

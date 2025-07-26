@@ -1,4 +1,5 @@
 <?php
+define('AJAX_MODE', true);
 require_once '../lib/bootstrap.php';  // Include sessione, log, permessi
 
 $id_post = (int)($_POST['post_id'] ?? 0);

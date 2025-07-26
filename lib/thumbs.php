@@ -1,18 +1,22 @@
 <?php
-function generaThumbnailSeNecessario(string $originalPath, string $thumbsBasePath, int $maxW = 300, int $maxH = 300): string {
-    // debug_log("📂 generaThumb richiesto per: $originalPath", 'debug');
-   
+function generaThumbnailSeNecessario(string $originalPath, string $thumbsBasePath, int $maxW = 300, int $maxH = 300): string
+{
+    debug_log("📂 generaThumb richiesto per: $originalPath", 'debug');
+
     if (!file_exists($originalPath)) return '';
 
     $relativePath = str_replace('/srv/http/leNostre/', '', $originalPath);
     $thumbPath = rtrim($thumbsBasePath, '/') . '/' . $relativePath;
+    $thumbDir  = dirname($thumbPath);  // ✅ ECCO IL FIX
 
-    if (file_exists($thumbPath)) return $thumbPath;
-
-    $thumbDir = dirname($thumbPath);
+    if (file_exists($thumbPath)) {
+        debug_log("📂 thumb gia' esistente per: $originalPath", 'debug');
+        return $thumbPath;
+    } 
     if (!is_dir($thumbDir)) {
-        mkdir($thumbDir, 0775, true);
-        debug_log("📂 Cartella creata: $thumbDir", 'debug');
+        $cmd = 'mkdir -p ' . escapeshellarg($thumbDir);
+        $output = shell_exec($cmd);
+        debug_log("⚡ mkdir via shell_exec: $cmd | output: $output", 'debug');
     }
 
     $imgData = @file_get_contents($originalPath);
@@ -49,5 +53,3 @@ function generaThumbnailSeNecessario(string $originalPath, string $thumbsBasePat
 
     return $thumbPath;
 }
-
-?>

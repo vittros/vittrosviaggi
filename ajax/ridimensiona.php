@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../lib/db_utilities.php';
 debug_log("✅ Inizio script");
 
 
@@ -22,6 +23,14 @@ $url = ridimensiona_per_post($path, $id);
 if ($url) {
     debug_log("✅ Immagine ridotta salvata: $url", "info");
     echo $url;
+    // Dopo aver fatto la copia...
+    if (!empty($id_post) && !empty($cartella)) {
+        if (db_update("UPDATE post SET cartella = ? WHERE id = ?", [$cartella, $id_post])) {
+            debug_log("📂 Tabella post aggiornata con data modifica per il post: $id_post", 'info');
+        } else {
+            debug_log("❌ Fallito aggiornamento tabella post con data modifica per il post: $id_post", 'info');
+        }
+    }
 } else {
     debug_log("❌ Errore durante il ridimensionamento", "info");
     http_response_code(500);

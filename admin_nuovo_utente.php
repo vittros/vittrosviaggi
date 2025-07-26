@@ -58,6 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <option value="editor">Editor</option>
                     <option value="amico">Amico</option>
                     <option value="ospite">Ospite</option>
+                    <option value="amik_nat">amico Naturista</option>
                 </select>
             </label><br><br>
             <button type="submit">Crea utente</button>

@@ -92,7 +92,7 @@ $utenti = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <form method="post" class="inline">
                                 <input type="hidden" name="id" value="<?= $u['id'] ?>">
                                 <select name="nuovo_ruolo" <?= $u['id'] == $_SESSION['user_id'] ? 'disabled' : '' ?>>
-                                    <?php foreach (['admin', 'editor', 'amico', 'ospite'] as $ruolo): ?>
+                                    <?php foreach (['admin', 'editor', 'amico', 'ospite', 'amik_nat'] as $ruolo): ?>
                                         <option value="<?= $ruolo ?>" <?= $u['ruolo'] === $ruolo ? 'selected' : '' ?>><?= $ruolo ?></option>
                                     <?php endforeach; ?>
                                 </select>

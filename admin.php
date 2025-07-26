@@ -57,6 +57,34 @@ debug_log("👀 L'utente $username entra in amministrazione.", "info");
             <!-- In futuro: -->
             <li><a href="admin_post.php">📝 Gestione post</a></li>
         </ul>
+        
+        <h2>Debug & Log</h2>
+        <table style="margin: auto; text-align: left; font-family: monospace;">
+            <tr>
+                <th>Debug attivo:</th>
+                <td><?= DEBUG_VITTROS ? '✅ Sì' : '❌ No' ?></td>
+            </tr>
+            <tr>
+                <th>Livello log:</th>
+                <td><?= htmlspecialchars(DEBUG_LEVEL) ?></td>
+            </tr>
+            <tr>
+                <th>File di log:</th>
+                <td><?= htmlspecialchars(DEBUG_LOGFILE) ?></td>
+            </tr>
+        </table>
+
+        <?php if (file_exists(DEBUG_LOGFILE)): ?>
+            <details style="margin-top:1em;">
+                <summary>📄 Visualizza ultimi log</summary>
+                <pre style="max-height: 300px; overflow-y: auto; background: #eee; padding: 1em; border-radius: 8px;">
+<?= htmlspecialchars(shell_exec("tail -n 50 " . DEBUG_LOGFILE)) ?>
+        </pre>
+            </details>
+        <?php else: ?>
+            <p style="text-align:center; color: red;">⚠️ File di log non trovato: <?= htmlspecialchars(DEBUG_LOGFILE) ?></p>
+        <?php endif; ?>
+
 
         <hr>
         <p>In futuro: gestione utenti, post, assegnazioni, esportazione...</p>

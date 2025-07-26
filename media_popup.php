@@ -5,65 +5,119 @@ require_once 'lib/db_utilities.php';
 
 $titolo = $_GET['titolo'] ?? '';
 $post_id = $_GET['post_id'] ?? 0;
-$azione = $_GET['azione'] ?? '';
 $cartella = $_GET['cartella'] ?? '';
+$sfondo = $_GET['sfondo'] ?? ($_POST['sfondo'] ?? '');
 
-// Recupera cartella salvata nel post
+// Recupera cartella salvata nel DB se non fornita
 if (!$cartella && $post_id) {
   $row = db_select_row("SELECT cartella FROM post WHERE id = ?", [$post_id]);
-  if ($row && !empty($row['cartella'])) {
-    $cartella = $row['cartella'];
-  }
+  if ($row && !empty($row['cartella'])) $cartella = $row['cartella'];
 }
 
+// Normalizza path
 $base_path = '/srv/http/leNostre';
-$thumbs_path = '/srv/http/leNostre/thumbs';
+$abs_cartella = realpath("$base_path/$cartella");
+if (!$abs_cartella || !str_starts_with($abs_cartella, $base_path)) {
+  die("Accesso non consentito");
+}
 
-$elenco_immagini = [];
-if ($azione === 'galleria' && $cartella) {
-  $path = "$base_path/$cartella";
-  $immagini = glob("$path/*.{jpg,jpeg,png,JPG,JPEG,PNG}", GLOB_BRACE);
-  foreach ($immagini as $img) {
-    $thumb = generaThumbnailSeNecessario($img, $thumbs_path);
-    $elenco_immagini[] = $thumb;
+// Galleria immagini
+$thumbs_path = "$base_path/thumbs";
+$immagini = glob("$abs_cartella/*.{jpg,jpeg,png,JPG,JPEG,PNG}", GLOB_BRACE);
+$thumbs = [];
+foreach ($immagini as $img) {
+  $thumbs[] = generaThumbnailSeNecessario($img, $thumbs_path);
+}
+
+// Navigazione cartelle sorelle
+// Se siamo nella root (leNostre), mostra le sottocartelle (anni)
+$rel_cartella = isset($cartella) ? trim($cartella) : '';
+if ($rel_cartella === '' || $rel_cartella === '.') {
+  // Siamo nella root leNostre
+  $cartella_padre = '';
+  $abs_cartella = $base_path;
+  $abs_padre = $base_path;
+} else {
+  $cartella_padre = dirname($rel_cartella ?? '');
+  $abs_cartella = "$base_path/$rel_cartella";
+  $abs_padre = "$base_path/$cartella_padre";
+}
+debug_log("📌 rel_cartella = '$rel_cartella' | cartella_padre = '$cartella_padre' | abs_cartella = '$abs_cartella'", 'debug');
+
+$cartelle_sorelle = [];
+
+$abs_cartella = "$base_path/$cartella";
+debug_log("📂 Cartella attiva: $cartella", 'info');
+
+// Prima: tentiamo di ottenere sottocartelle con immagini
+$sottocartelle = [];
+if (is_dir($abs_cartella)) {
+  $entries = scandir($abs_cartella);
+  foreach ($entries as $entry) {
+    if ($entry === '.' || $entry === '..') continue;
+    $sub_path = "$abs_cartella/$entry";
+    if (is_dir($sub_path) && contiene_immagini($sub_path)) {
+      $rel = ($cartella ? "$cartella/" : '') . $entry;
+      $sottocartelle[$rel] = $entry;
+      // debug_log("✅ Sottocartella '$entry' accettata (immagini trovate)", 'debug');
+    }
   }
 }
 
-function suggerisci_cartelle_sorted($titolo, $base_path)
-{
-  $tutte = suggerisci_cartelle($titolo, $base_path);
-  ksort($tutte, SORT_NATURAL | SORT_FLAG_CASE);
-  return $tutte;
+// Se abbiamo sottocartelle → le usiamo
+if (!empty($sottocartelle)) {
+  $cartelle_sorelle = $sottocartelle;
+  // $cartella_padre = $cartella; // serve per ".. (su)" qua era un errore
+  debug_log("🔽 Visualizzazione sottocartelle di '$cartella', cartella padre = $cartella_padre", 'debug');
+} else {
+  // Altrimenti: visualizziamo le sorelle (come prima)
+  $rel_cartella = $cartella;
+  $cartella_padre = dirname($rel_cartella);
+  $abs_padre = "$base_path/$cartella_padre";
+  // debug_log("🔼 Nessuna sottocartella utile → risalgo a cartella_padre: '$cartella_padre'", 'debug');
+
+  if (is_dir($abs_padre)) {
+    $dirs = scandir($abs_padre);
+    foreach ($dirs as $entry) {
+      if ($entry === '.' || $entry === '..') continue;
+      $full = "$abs_padre/$entry";
+      if (is_dir($full)) {
+        if (contiene_immagini($full)) {
+          $rel = ($cartella_padre ? "$cartella_padre/" : '') . $entry;
+          $cartelle_sorelle[$rel] = $entry;
+          // debug_log("✅ Cartella sorella '$entry' accettata (immagini trovate)", 'debug');
+        } else {
+          debug_log("❌ Cartella sorella '$entry' esclusa (nessuna immagine)", 'debug');
+        }
+      }
+    }
+  }
 }
-$suggerite = ($azione === 'galleria') ? suggerisci_cartelle_sorted($titolo, $base_path) : [];
-$cartella_attiva = $cartella;
+
+ksort($cartelle_sorelle, SORT_NATURAL | SORT_FLAG_CASE);
+
 ?>
 <!DOCTYPE html>
 <html lang="it">
 
 <head>
   <meta charset="UTF-8">
-  <title>Media Popup</title>
-  <link rel="stylesheet" href="css/theme-default.css?v=3">
+  <title>VittExplorer</title>
+  <link rel="stylesheet" href="css/theme-default.css?v=4">
   <style>
     body {
-      margin: 0;
       font-family: sans-serif;
-      background-size: cover;
+      background: #f5f5f5;
+      margin: 0;
     }
 
     .popup-box {
       max-width: 96%;
       margin: 2em auto;
+      background: #fff;
       padding: 1em;
-      background: rgba(255, 255, 255, 0.75);
       border-radius: 12px;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
-    }
-
-    h2 {
-      margin-top: 0;
-      font-size: 1.5em;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
     }
 
     .media-layout {
@@ -72,143 +126,130 @@ $cartella_attiva = $cartella;
     }
 
     .col-sx {
-      width: 25%;
+      width: 250px;
+      font-size: 0.9em;
     }
 
     .col-dx {
-      flex-grow: 1;
+      flex: 1;
       display: flex;
       flex-wrap: wrap;
-      gap: 5px;
-      justify-content: flex-start;
-    }
-
-    .sezione-titolo {
-      font-weight: bold;
-      margin-bottom: 0.5em;
-      color: #222;
-    }
-
-    .lista-cartelle {
-      font-size: 0.8em;
-      width: 260px;
-      /* era 200px? aumentiamo un po' */
-      padding-right: 10px;
-    }
-
-    .lista-cartelle li {
-      margin: 3px 0;
-    }
-
-    .lista-cartelle .attiva a {
-      background: #cde3ff;
-      font-weight: bold;
-      padding: 2px 4px;
-      border-radius: 5px;
-    }
-
-    .thumb-container {
-      position: relative;
-      border-radius: 8px;
-      overflow: hidden;
-      cursor: pointer;
-      border: 2px solid transparent;
+      gap: 6px;
     }
 
     .thumb-container img.thumb {
-      width: 170px;
+      width: 160px;
       height: auto;
-      aspect-ratio: 16 / 9;
-      object-fit: cover;
       border-radius: 6px;
     }
 
     .thumb-container.selezionato {
-      border: none;
-      position: relative;
+      outline: 3px solid #4CAF50;
+      border-radius: 6px;
     }
 
-    .thumb-container.selezionato::after {
-      content: "✅";
-      position: absolute;
-      top: 6px;
-      right: 6px;
-      font-size: 0.7em;
-      background: rgba(255, 255, 255, 0.7);
-      border-radius: 50%;
-      padding: 2px 5px;
-      pointer-events: none;
+    .col-dx {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-start;
+      align-items: flex-start;
     }
 
-    .thumb-container .checkmark {
-      position: absolute;
-      top: 4px;
-      right: 4px;
-      background: #4CAF50;
+    .thumb-container img.thumb {
+      width: 180px;
+      height: 130px;
+      object-fit: cover;
+      border-radius: 6px;
+    }
+
+    .thumb-container img.thumb {
+      width: 180px;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+    }
+
+    .attiva a {
+      font-weight: bold;
+      background: #dff0ff;
+      padding: 2px 4px;
+      border-radius: 5px;
+      display: block;
+    }
+
+    ul.lista-cartelle {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .btn {
+      display: block;
+      margin: 0.5em 0;
+      padding: 0.5em 0.8em;
+      background: #0077aa;
       color: white;
-      width: 20px;
-      height: 20px;
-      font-size: 14px;
-      line-height: 20px;
+      border-radius: 6px;
       text-align: center;
-      border-radius: 50%;
-    }
-
-    .media-buttons {
-      margin-top: 1em;
-    }
-
-    .media-buttons .btn {
-      display: inline-block;
-      margin: 0.5em 0.3em;
-      padding: 0.6em 1em;
-      font-size: 1em;
-      border-radius: 8px;
       text-decoration: none;
-      color: white;
-      background: #4da3c7;
+    }
+
+    .btn:hover {
+      background: #005f88;
     }
   </style>
 </head>
 
 <body>
   <div class="popup-box">
-    <h2>📁 Galleria per: <?= htmlspecialchars($titolo) ?></h2>
-    <?php if ($azione !== 'galleria'): ?>
-      <div class="media-buttons">
-        <a class="btn" href="media_popup.php?azione=galleria&post_id=<?= $post_id ?>&titolo=<?= urlencode($titolo) ?>">📸 Importa da Galleria</a>
-        <a class="btn" style="background:#66cc99;" href="lib/media/upload.php?post_id=<?= $post_id ?>">📤 Carica da PC</a>
-      </div>
-    <?php else: ?>
-      <div class="media-layout">
-        <div class="col-sx">
-          <strong>📂 Cartelle suggerite:</strong>
-          <ul class="lista-cartelle">
-            <?php foreach ($suggerite as $rel => $nome): ?>
-              <li class="<?= ($rel == $cartella_attiva) ? 'attiva' : '' ?>">
-                <a href="?azione=galleria&post_id=<?= $post_id ?>&titolo=<?= urlencode($titolo) ?>&cartella=<?= urlencode($rel) ?>">
-                  <?= htmlspecialchars($nome) ?>
-                </a>
-              </li>
-            <?php endforeach; ?>
-          </ul>
-          <div class="media-buttons">
-            <button class="btn" onclick="inserisciImmagine()">🖼 Inserisci immagine</button><br>
-            <button class="btn" style="background:#888;" onclick="window.location='media_popup.php?post_id=<?= $post_id ?>&titolo=<?= urlencode($titolo) ?>'">⬅ Torna alla scelta</button><br>
-            <button class="btn" style="background:#ffb000;" onclick="window.close()">❌ Chiudi PopUp</button>
-          </div>
-        </div>
-        <div class="col-dx">
-          <?php foreach ($elenco_immagini as $thumb): ?>
-            <?php $rel = str_replace('/srv/http/leNostre/', '', $thumb); ?>
-            <div class="thumb-container" onclick="selezionaThumb(this)">
-              <img src="<?= str_replace('/srv/http', '', $thumb) ?>" class="thumb" data-relpath="<?= htmlspecialchars($rel) ?>">
-              <div class="checkmark" style="display:none;">✔</div>
-            </div>
+    <h2>🧭 VittExplorer: <?= htmlspecialchars($titolo) ?> <small style="font-weight:normal;color:#555;">→ <?= $rel_cartella ?></small></h2>
+    <div class="media-layout">
+      <div class="col-sx">
+        <ul class="lista-cartelle">
+          <!-- <?php if ($rel_cartella !== '' && $rel_cartella !== '.'): ?> -->
+          <li>
+            <a href="?azione=galleria&post_id=<?= $post_id ?>&titolo=<?= urlencode($titolo) ?>&cartella=<?= urlencode($cartella_padre) ?>">⬆️ .. (su)</a>
+          </li>
+          <!-- <?php endif; ?> -->
+
+          <?php foreach ($cartelle_sorelle as $path => $nome): ?>
+            <?php $classe = ($path === $rel_cartella) ? 'attiva' : ''; ?>
+            <li class="<?= $classe ?>">
+              <a href="?azione=galleria&post_id=<?= $post_id ?>&titolo=<?= urlencode($titolo) ?>&cartella=<?= urlencode($path) ?>">
+                <?= htmlspecialchars($nome) ?>
+              </a>
+            </li>
           <?php endforeach; ?>
-        </div>
+        </ul>
+
+        <!--         <ul class="lista-cartelle">
+          <?php if ($rel_cartella !== '' && $rel_cartella !== '.'): ?>
+            <li>
+              <a href="?azione=galleria&post_id=<?= $post_id ?>&titolo=<?= urlencode($titolo) ?>&cartella=<?= urlencode($cartella_padre) ?>">
+                ⬆️ .. (su)
+              </a>
+            </li>
+          <?php endif; ?>
+          <?php foreach ($cartelle_sorelle as $rel => $nome): ?>
+            <li class="<?= ($rel === $rel_cartella) ? 'attiva' : '' ?>">
+              <a href="?azione=galleria&post_id=<?= $post_id ?>&titolo=<?= urlencode($titolo) ?>&cartella=<?= urlencode($rel) ?>"><?= htmlspecialchars($nome) ?></a>
+            </li>
+          <?php endforeach; ?>
+        </ul> -->
+
+        <hr>
+        <a class="btn" onclick="inserisciImmagine()">🖼 Inserisci</a>
+        <a class="btn" style="background:#888;" href="media_popup.php?post_id=<?= $post_id ?>&titolo=<?= urlencode($titolo) ?>">⬅ Torna</a>
+        <a class="btn" style="background:#c44;" onclick="window.close()">❌ Chiudi</a>
       </div>
-    <?php endif; ?>
+      <div class="col-dx">
+        <?php foreach ($thumbs as $thumb):
+          $rel = str_replace('/srv/http/leNostre/', '', $thumb); ?>
+          <div class="thumb-container" onclick="selezionaThumb(this)">
+            <img src="<?= str_replace('/srv/http', '', $thumb) ?>" class="thumb" data-relpath="<?= htmlspecialchars($rel) ?>">
+          </div>
+        <?php endforeach; ?>
+      </div>
+    </div>
   </div>
   <script>
     function selezionaThumb(div) {
@@ -217,14 +258,12 @@ $cartella_attiva = $cartella;
     }
 
     function inserisciImmagine() {
-      const selezionata = document.querySelector('.thumb-container.selezionato img');
-      if (!selezionata) {
-        alert("Seleziona un'immagine!");
-        return;
-      }
+      const img = document.querySelector('.thumb-container.selezionato img');
+      if (!img) return alert("Seleziona un'immagine!");
 
-      const relpath = selezionata.getAttribute("data-relpath");
-      const post_id = <?= (int)$post_id ?>;
+      const relpath = img.getAttribute("data-relpath");
+      const sfondo = document.querySelector("#sfondo")?.value || '';
+      console.log("📤 Inviando sfondo:", sfondo);
 
       fetch('ajax/handler_ajax.php', {
           method: 'POST',
@@ -233,43 +272,20 @@ $cartella_attiva = $cartella;
           },
           body: new URLSearchParams({
             relpath,
-            post_id
+            post_id: <?= (int)$post_id ?>,
+            sfondo
           })
         })
         .then(r => r.json())
         .then(data => {
-          if (!data.success) {
-            alert("Errore: " + data.error);
-            return;
+          if (!data.success) return alert("Errore: " + data.error);
+          if (window.opener?.tinymce?.activeEditor) {
+            window.opener.tinymce.activeEditor.insertContent(`<img src="${data.url}" alt="" style="max-width:100%;">`);
           }
-
-          const url = data.url;
-
-          // Invia anche il log (opzionale, già fatto in PHP ma teniamolo)
-          fetch('ajax_log_selezione.php', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: new URLSearchParams({
-              path: relpath
-            })
-          });
-
-          // Inserisce l'immagine nel TinyMCE del padre
-          if (window.opener && window.opener.tinymce) {
-            const editor = window.opener.tinymce.activeEditor;
-            editor.insertContent(`<img src="${url}" alt="" style="max-width:100%;">`);
-          }
-
-          // window.close();
-        })
-        .catch(err => {
-          alert("Errore nella comunicazione AJAX");
-          console.error(err);
         });
     }
   </script>
+  <input type="hidden" id="sfondo" value="<?= htmlspecialchars($sfondo) ?>">
 
 </body>
 
