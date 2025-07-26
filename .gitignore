@@ -1,24 +1,32 @@
-# File temporanei / di backup
+# === File temporanei e di backup ===
 *.sav
 *.old
 *.tmp
 *~
+*.bak
+*.swp
+*.swo
+*.orig
 Untitled-1.ini
-css/theme-default.css.*
-lib/ridimensiona_lib.php.sav
-login.php.sav
-media_popup.php.sav
-modifica_post.php.old
 
-# Cartelle generate
+# === File specifici di backup manuali ===
+vittrosviaggi_backup_*
+
+# === Log e output runtime ===
+*.log
+/tmp/*
+/var/log/vittrosviaggi/*.log
+
+# === Cartelle generate / runtime ===
 foto/post_*/
 lib/media/
 img/
 sfondi/
 
-# Log
-*.log
-
-# Configurazione sensibile
+# === Configurazione locale e sensibile ===
 lib/config.php
+
+# === File editor/test locali ===
+.DS_Store
+Thumbs.db
 
