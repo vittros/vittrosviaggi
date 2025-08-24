@@ -71,4 +71,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     </div>
   </div>
 </main>
-<?php include 'lib/footer.php'; ?>
+<?php
+include 'lib/footer.php';
+?>

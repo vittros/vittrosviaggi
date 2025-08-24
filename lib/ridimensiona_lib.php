@@ -4,9 +4,9 @@
 
 function generaImmagineRidotta($relpath, $id_post)
 {
-    $base_input = "/srv/http/leNostre";
-    $base_output = "/srv/http/vittrosviaggi/foto/post_$id_post";
-    $web_output = "/vittrosviaggi/foto/post_$id_post";
+    $base_input = "/srv/http/leNostre"; // ok
+    $base_output = BASE_FS . "foto/post_$id_post";
+    $web_output = BASE_URL . "foto/post_$id_post";
     $basename = basename($relpath);
 
     $origine = realpath("$base_input/$relpath");

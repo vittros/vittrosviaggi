@@ -4,7 +4,12 @@ require_once 'lib/config.php';
 require_once 'lib/functions.php';
 $pagina_corrente = 'home';
 require_once 'lib/header.php';
-
+// Controllo dell'utente
+if (!isset($_SESSION['user_id'])) {
+    // Redireziona al modulo di login
+    header('Location: login.php');
+    exit();
+}
 $ruolo = $_SESSION['ruolo'] ?? 'ospite';
 ?>
 

@@ -1,0 +1,54 @@
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+
+body.theme-default {
+  --bg-color: #f0f0f0;
+  --text-color: #222;
+  --accent-color: #007bff;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: sans-serif;
+}
+
+/* Sfondo generale */
+body.theme-default {
+    background: url('../sfondi/home-default.jpg') no-repeat center center fixed;
+    background-size: cover;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+button,
+input[type="submit"],
+select {
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+  padding: 0.5em 1em;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+
+
+.login-box {
+    background-color: rgba(222, 240, 227, 0.4); /* trasparenza 75% */
+    border: 2px solid #74e0d7;
+    max-width: 420px;
+    margin-top: 60px;
+    margin-left: 60px;
+    margin-right: auto;
+    padding: 2em;
+    border-radius: 20px;
+    box-shadow: 0 0 15px rgba(139, 69, 19, 0.5);
+    backdrop-filter: blur(4px); /* opzionale: effetto vetro smerigliato */
+}
+
+a {
+  color: var(--accent-color);
+}
+rgb(222, 240, 227)

@@ -81,7 +81,7 @@ $foto = $stmt2->fetchAll();
 <meta charset="UTF-8" />
 <title><?= htmlspecialchars($post['titolo']) ?> - VittRos Viaggi</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-<link rel="stylesheet" href="/vittrosviaggi/css/content.css">
+<link rel="stylesheet" href="<?= BASE_URL ?>css/content.css">
 <style>
 .img-gallery {
     max-width: 200px;

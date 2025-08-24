@@ -5,6 +5,9 @@
 .bg-giallo {
   background-color: #fff9c4;
 }
+.bg-rosa {
+  background-color: #fff9c4;
+}
 
 /* === BOX SCORRIBILI (usato nei form) === */
 .scroll-box {
@@ -52,4 +55,52 @@ body.theme-birra {
 
 .scroll-box {
   background-color: rgba(255, 255, 255, 0.9); /* semitrasparente */
+}
+img.img-left {
+  float: left;
+  margin: 0.5em 1em 0.5em 0;
+  max-width: 50%;
+}
+
+img.img-center {
+  display: block;
+  margin: 0.5em auto;
+  max-width: 70%;
+}
+
+img.img-right {
+  float: right;
+  margin: 0.5em 0 0.5em 1em;
+  max-width: 50%;
+}
+/* === STILI DI ALLINEAMENTO IMMAGINI === */
+img.img-left {
+  float: left;
+  margin: 0.5em 1em 0.5em 0;
+  max-width: 50%;
+}
+
+img.img-right {
+  float: right;
+  margin: 0.5em 0 0.5em 1em;
+  max-width: 50%;
+}
+
+img.img-center {
+  display: block;
+  margin: 0.5em auto;
+  max-width: 70%;
+}
+
+div.img-left,
+div.img-right,
+div.img-top {
+  overflow: hidden;
+  margin: 1em 0;
+}
+
+div.img-top img {
+  display: block;
+  margin: 0 auto 0.5em auto;
+  max-width: 70%;
 }

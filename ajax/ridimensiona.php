@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../lib/db_utilities.php';
-debug_log("✅ Inizio script");
+debug_log("✍️ autosave ricevuto (titolo=\"" . mb_substr($titolo,0,60) . "\")", 'info');
+debug_log("✅ Inizio script", 'info');
 
 
 require_once __DIR__ . '/../lib/bootstrap.php';

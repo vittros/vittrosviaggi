@@ -5,7 +5,7 @@ require_once '../lib/bootstrap.php';  // Include sessione, log, permessi
 $id_post = (int)($_POST['post_id'] ?? 0);
 $src_rel = $_POST['path'] ?? '';
 $src_abs = "/srv/http/leNostre/$src_rel";
-$dest_dir = "/srv/http/vittrosviaggi/foto/post_$id_post";
+$dest_dir = "/srv/http<?= BASE_URL ?>foto/post_$id_post";
 
 if (!file_exists($src_abs) || !is_file($src_abs)) {
     debug_log("❌ Immagine sorgente non trovata: $src_abs", 'error');
@@ -28,7 +28,7 @@ $dest_file = "$dest_dir/$basename";
 require_once '../lib/ridimensiona_lib.php';
 if (ridimensiona_immagine($src_abs, $dest_file, 1280, 1024)) {
     debug_log("✅ Immagine copiata e ridotta: $dest_file", 'info');
-    echo json_encode(['success' => true, 'url' => "/vittrosviaggi/foto/post_$id_post/$basename"]);
+    echo json_encode(['success' => true, 'url' => "<?= BASE_URL ?>foto/post_$id_post/$basename"]);
 } else {
     debug_log("❌ Errore nel ridimensionamento", 'error');
     http_response_code(500);

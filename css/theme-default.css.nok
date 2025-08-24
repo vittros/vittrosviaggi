@@ -1,0 +1,18 @@
+body {
+  background: url("/vittrosviaggi/img/plancia_camper_sfondo.jpg") no-repeat center center fixed;
+  background-size: cover;
+  padding: 2em;
+}
+.modifica-post-header {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+  margin-bottom: 1em;
+}
+.modifica-post-titolo {
+  flex: 1;
+  padding: 0.4em;
+  font-size: 1.5em;
+  border: 1px solid #aaa;
+  border-radius: 6px;
+}

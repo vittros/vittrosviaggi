@@ -1,9 +1,5 @@
 <?php
 // lib/footer.php
-require_once 'lib/caricaTinyMCE.php';
-if (isset($usa_editor) && $usa_editor === true) {
-  caricaTinyMCE();
-}
 
 $data_format = date_create($data_modifica);
 $data_breve = $data_format ? $data_format->format('d/m/Y') : '';

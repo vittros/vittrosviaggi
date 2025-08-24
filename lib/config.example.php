@@ -1,5 +1,5 @@
 <?php
-define('BASE_URL', '/vittrosviaggi/');
+define('BASE_URL', '<?= BASE_URL ?>');
 define('DB_HOST', 'localhost');
 define('DB_USER', 'XXXX');   // <-- cambia con il tuo
 define('DB_PASS', 'XXXXXX');     // <-- cambia con la tua

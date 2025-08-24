@@ -18,9 +18,14 @@ body.theme-default {
 
 /* Sfondo generale */
 body.theme-default {
-    background: url('../sfondi/home-default.jpg') no-repeat center center fixed;
-    background-size: cover;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: url('/vittrosviaggi_1.1/sfondi/home-default.jpg') no-repeat center center fixed;
+  background-size: cover;
+  /* variabili + font */
+  --bg-color: #f0f0f0;
+  --text-color: #222;
+  --accent-color: #007bff;
+  color: var(--text-color);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 button,
@@ -34,26 +39,129 @@ select {
   cursor: pointer;
 }
 
+.post-box {
+  position: relative;
+  top: 20px;
+  left: -40px;
+  background-color: rgba(222, 240, 227, 0.4);
+  /* stessa opacità */
+  border: 2px solid #74e0d7;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
 .login-box {
-    position: relative;
-    top: 20px;
-    left: -40px;
-    background-color: rgba(222, 240, 227, 0.4);
-    border: 2px solid #74e0d7;
-    width: 400px;
-    padding: 2em;
-    border-radius: 20px;
-    box-shadow: 0 0 15px rgba(139, 69, 19, 0.5);
-    backdrop-filter: blur(4px);
+  position: relative;
+  top: 20px;
+  left: -40px;
+  background-color: rgba(222, 240, 227, 0.4);
+  border: 2px solid #74e0d7;
+  width: 400px;
+  padding: 2em;
+  border-radius: 20px;
+  box-shadow: 0 0 15px rgba(139, 69, 19, 0.5);
+  backdrop-filter: blur(4px);
 }
 
 a {
   color: var(--accent-color);
 }
 
+:root{
+  --vit-sidebar-bg: rgba(255,245,157,.92);
+  --vit-sidebar-fg: #1a1a1a;
+  --vit-sidebar-border: rgba(233,196,0,.55);
+}
+body.media-popup .sx{
+  background: var(--vit-sidebar-bg);
+  color: var(--vit-sidebar-fg);
+  border-right: 1px solid var(--vit-sidebar-border);
+  backdrop-filter: blur(2px);
+}
+body.media-popup .lista li:hover{ background: rgba(255,255,255,.35); }
+body.media-popup .lista li.active{
+  background: rgba(255,255,255,.65);
+  border-left: 4px solid var(--vit-sidebar-border);
+  font-weight: 700;
+}
+
+/* popup galleria */
+.media-popup .sx{
+  background: var(--vit-sidebar-bg);
+  color: var(--vit-sidebar-fg);
+  border-right: 1px solid var(--vit-sidebar-border);
+  backdrop-filter: blur(2px);
+}
+.media-popup .sx .hint,
+.media-popup .sx h3,
+.media-popup .sx li { color: var(--vit-sidebar-fg); text-shadow: 0 1px 0 rgba(255,255,255,.5); }
+
+.media-popup .lista li:hover{
+  background: rgba(255,255,255,.35);
+}
+.media-popup .lista li.active{
+  background: rgba(255,255,255,.65);
+  border-left: 4px solid var(--vit-sidebar-border);
+  font-weight: 700;
+}
+
+/* riuso: lista post generica */
+.page-elenco-post .sidebar{
+  background: var(--vit-sidebar-bg);
+  color: var(--vit-sidebar-fg);
+  border-right: 1px solid var(--vit-sidebar-border);
+}
+
+body.theme-default{
+  --paper: rgba(255,245,157,.68);
+  --paper-border: rgba(233,196,0,.55);
+  --paper-text: #1a1a1a;
+}
+.media-popup .vit-panel,
+.media-popup .toolbar { background: var(--paper); border:1px solid var(--paper-border); color:var(--paper-text); }
+.media-popup .thumb.selected { outline:3px solid var(--paper-border); }
+
+
+/* Il popup media usa queste variabili */
+.media-popup .vit-card,
+.media-popup .vit-panel,
+.media-popup .lista li.active,
+.media-popup .toolbar {
+  background: var(--paper);
+  border: 1px solid var(--paper-border);
+  color: var(--paper-text);
+}
+
+.media-popup .lista li { color: var(--paper-text); }
+.media-popup .thumb { background: rgba(255,255,255,.6); }
+.media-popup .thumb.selected { outline: 3px solid var(--paper-border); }
+
 body.page-modifica {
   padding: 1em;
-  background-color: #e6f0eb; /* leggero tono neutro */
+  background-color: #e6f0eb;
+  /* leggero tono neutro */
+}
+
+body.media-popup.page-modifica {
+  background-color: transparent;
+}
+
+body.media-popup #contenuto,
+body.media-popup .post-box,
+body.media-popup .editor-box,
+body.media-popup .login-box,
+body.media-popup main {
+  background: rgba(255, 255, 255, .08);
+  backdrop-filter: blur(4px);
+  border-color: rgba(116, 224, 215, .6);
+}
+
+body.media-popup,
+body.media-popup .wrap,
+body.media-popup .vitexplorer-shell {
+  background: transparent !important;
+  box-shadow: none;
 }
 
 .editor-box {
@@ -63,19 +171,10 @@ body.page-modifica {
   background-color: rgba(255, 255, 255, 0.8);
   border-radius: 16px;
   box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
-  min-height: 90vh; quasi tutta l’altezza
+   min-height: 90vh; /* quasi tutta l’altezza */
   /* min-height: calc(100vh - 4em - 60px); /* viewport - margini - altezza footer stimata */
 }
 
-/* .editor-box {
-  margin: 1em;
-  padding: 2em;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  background-color: rgba(255,255,255,0.85);
-  padding-bottom: 120px;
-}
- */
 .btn-toolbar {
   margin-top: 2em;
   text-align: center;
@@ -84,7 +183,9 @@ body.page-modifica {
 .btn-toolbar .btn {
   margin: 0 0.5em;
 }
-html, body {
+
+html,
+body {
   height: 100%;
   margin: 0;
   padding: 0;
@@ -130,6 +231,7 @@ footer {
   transition: opacity 0.5s ease;
   z-index: 99;
 }
+
 #contenuto {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -159,7 +261,47 @@ footer {
   font-weight: bold;
   border-left: 4px solid #007acc;
 }
+/* VitExplorer highlight */
+.theme-default .vitexplorer-shell,
+.theme-default .vitexplorer-toolbar,
+.theme-default .vit-panel,
+.theme-default .vit-card {
+  --ve-accent: #f4d441;
+  --ve-ink: #2b2b2b;
+  background-color: rgba(244, 212, 65, .15);
+  color: var(--ve-ink);
+}
 
+.theme-default .vitexplorer-toolbar h3,
+.theme-default .lista h3,
+.theme-default .lista li { color: #1a1a1a; }
+.theme-default .lista li:hover { background: rgba(244,212,65,.35); }
+.theme-default .lista li.active { background: rgba(244,212,65,.55); font-weight:700; }
 
+/* Colori più leggibili in VitExplorer */
+.media-popup .sx { background: rgba(244, 212, 65, .20); }
+.media-popup .lista li { color:#111; text-shadow: 0 1px 0 rgba(255,255,255,.35); }
+.media-popup .lista li:hover { background: rgba(244,212,65,.35); }
+.media-popup .lista li.active { background: rgba(247,227,122,.85); font-weight:700; }
 
+/* Evita che il badge utente copra i bottoni del popup */
+.media-popup .user-badge { display:none !important; }
+/* in alternativa: sposta a sinistra lo spazio dei bottoni */
+// header.toolbar { padding-right: 110px; } 
 
+.user-badge{
+  position:absolute; top:10px; right:10px;
+  display:flex; align-items:center; gap:.5rem;
+  background:rgba(255,255,255,.50);
+  border:1px solid #ccc; border-radius:999px;
+  padding:.3em .6em; font-size:.8em; color:#444;
+  box-shadow:2px 2px 5px rgba(0,0,0,.1);
+  z-index:999;
+}
+.user-badge .logout{
+  appearance:none; cursor:pointer;
+  border:1px solid rgba(0,0,0,.1); border-radius:999px;
+  background:rgba(255,255,255,.7);
+  padding:.2em .7em; font-weight:600;
+}
+body.media-popup #global-user-badge{ display:none !important; } /* niente badge nei popup */

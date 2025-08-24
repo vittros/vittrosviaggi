@@ -22,14 +22,23 @@ function db_insert($query, $params = []) {
   return $db->lastInsertId();
 }
 
-function db_update($query, $params = []) {
+function db_delete($query, $params = []) {
   $db = getPDO();
   $stmt = $db->prepare($query);
   return $stmt->execute($params);
 }
 
-function db_delete($query, $params = []) {
+function db_exec($query, $params = []) {
   $db = getPDO();
   $stmt = $db->prepare($query);
-  return $stmt->execute($params);
+  $stmt->execute($params);
+  return $stmt->rowCount(); // n. righe toccate
+}
+
+// (opzionale) se vuoi, fai sì che db_update ritorni rowCount() invece di bool:
+function db_update($query, $params = []) {
+  $db = getPDO();
+  $stmt = $db->prepare($query);
+  $stmt->execute($params);
+  return $stmt->rowCount();
 }
